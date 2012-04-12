@@ -39,11 +39,11 @@ module WepayRails
       # :charge_tax	No	A boolean value (0 or 1). If set to 1 and the account has a relevant tax entry (see /account/set_tax), then tax will be charged.
       def perform_checkout(parms)
         security_token = Digest::SHA2.hexdigest("#{rand(4)}#{Time.now.to_i}")
+        api_url = parms.delete(:api_url)
         defaults = {
             :callback_uri     => ipn_callback_uri(security_token),
             :redirect_uri     => checkout_redirect_uri(security_token),
             :fee_payer        => @wepay_config[:fee_payer],
-            :type             => @wepay_config[:checkout_type],
             :charge_tax       => @wepay_config[:charge_tax] ? 1 : 0,
             :app_fee          => @wepay_config[:app_fee],
             :auto_capture     => @wepay_config[:auto_capture] ? 1 : 0,
@@ -52,12 +52,18 @@ module WepayRails
             :account_id       => @wepay_config[:account_id]
         }.merge(parms)
 
-        resp = self.call_api("/checkout/create", defaults).symbolize_keys!
+        resp = self.call_api(api_url || "/checkout/create", defaults).symbolize_keys!
         resp.merge({:security_token => security_token})
       end
 
       def lookup_checkout(checkout_id)
         co = self.call_api("/checkout", {:checkout_id => checkout_id})
+        co.delete("type")
+        co
+      end
+
+      def lookup_preapproval(preapproval_id)
+        co = self.call_api("/preapproval", {:preapproval_id => preapproval_id})
         co.delete("type")
         co
       end

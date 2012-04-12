@@ -7,7 +7,7 @@ production:
   after_checkout_redirect_uri: "http://www.example.com/purchase/finalize"
   scope: [refund_payments,collect_payments,view_balance,view_user]
   wepay_api_uri: "https://www.wepay.com/v2"
-  fee_payer: Payee
+  fee_payer: payee
   checkout_type: GOODS
   charge_tax: false
   app_fee: 0
@@ -24,7 +24,7 @@ development:
   after_checkout_redirect_uri: "http://www.example.com/purchase/finalize"
   scope: [refund_payments,collect_payments,view_balance,view_user]
   wepay_api_uri: "https://stage.wepay.com/v2"
-  fee_payer: Payee
+  fee_payer: payee
   checkout_type: GOODS
   charge_tax: false
   app_fee: 0
@@ -41,7 +41,7 @@ test:
   after_checkout_redirect_uri: "http://www.example.com/purchase/finalize"
   scope: [refund_payments,collect_payments,view_balance,view_user]
   wepay_api_uri: "https://stage.wepay.com/v2"
-  fee_payer: Payee
+  fee_payer: payee
   checkout_type: GOODS
   charge_tax: false
   app_fee: 0

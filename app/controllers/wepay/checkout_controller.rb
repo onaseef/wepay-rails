@@ -1,10 +1,20 @@
 class Wepay::CheckoutController < Wepay::ApplicationController
   def index
-    record = WepayCheckoutRecord.find_by_checkout_id_and_security_token(params[:checkout_id],params[:security_token])
+    conds = {
+      :security_token  => params[:security_token],
+      :checkout_id     => params[:checkout_id],
+      :preapproval_id  => params[:preapproval_id],
+    }.delete_if {|k,v| v.nil?}
+
+    record = WepayCheckoutRecord.where(conds).first
 
     if record.present?
       wepay_gateway = WepayRails::Payments::Gateway.new
-      checkout = wepay_gateway.lookup_checkout(record.checkout_id)
+      if record.checkout_id.present?
+        checkout = wepay_gateway.lookup_checkout(record.checkout_id)
+      else
+        checkout = wepay_gateway.lookup_preapproval(record.preapproval_id)
+      end
       record.update_attributes(checkout)
       redirect_to "#{wepay_gateway.configuration[:after_checkout_redirect_uri]}?checkout_id=#{params[:checkout_id]}"
     else
