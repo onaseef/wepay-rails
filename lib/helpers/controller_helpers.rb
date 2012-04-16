@@ -64,6 +64,21 @@ module WepayRails
         redirect_to record.checkout_uri and return
       end
 
+      def cancel_preapproval(preapproval_id, access_token=nil)
+        wepay_gateway = WepayRails::Payments::Gateway.new(access_token)
+        response = wepay_gateway.call_api('/preapproval/cancel', {
+          :preapproval_id => preapproval_id
+        }).symbolize_keys!
+
+        if response[:preapproval_id].blank? || response[:state].blank?
+          raise WepayRails::Exceptions::WepayCheckoutError.new("An error occurred: #{response.inspect}")
+        end
+
+        record = WepayCheckoutRecord.find_by_preapproval_id(preapproval_id)
+        # record.update_attribute(:state, response[:state]) if record
+        record
+      end
+
     end
   end
 end
