@@ -15,6 +15,7 @@ class Wepay::CheckoutController < Wepay::ApplicationController
       else
         checkout = wepay_gateway.lookup_preapproval(record.preapproval_id)
       end
+      checkout.delete_if {|k,v| !record.attributes.include? k}
       record.update_attributes(checkout)
       redirect_to "#{wepay_gateway.configuration[:after_checkout_redirect_uri]}?checkout_id=#{params[:checkout_id]}"
     else
