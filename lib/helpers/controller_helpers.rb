@@ -75,7 +75,7 @@ module WepayRails
         end
 
         record = WepayCheckoutRecord.find_by_preapproval_id(preapproval_id)
-        # record.update_attribute(:state, response[:state]) if record
+        record.update_attribute(:state, response[:state]) if record
         record
       end
 
