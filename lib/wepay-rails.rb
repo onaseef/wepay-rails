@@ -1,5 +1,6 @@
 require 'active_record'
 require 'helpers/controller_helpers'
+require 'api/account_methods'
 require 'api/checkout_methods'
 require 'httparty'
 module WepayRails
@@ -41,6 +42,7 @@ module WepayRails
       base_uri @base_uri
 
       attr_accessor :access_token
+      attr_accessor :account_id
 
       # Pass in the wepay access token that we got after the oauth handshake
       # and use it for ongoing comunique with Wepay.
@@ -76,6 +78,7 @@ module WepayRails
 
         raise WepayRails::Exceptions::AccessTokenError.new("A problem occurred trying to get the access token: #{json.inspect}") unless json.has_key?("access_token")
 
+        @account_id   = json["user_id"]
         @access_token = json["access_token"]
       end
 
@@ -110,6 +113,7 @@ module WepayRails
         JSON.parse(response.body)
       end
 
+      include WepayRails::Api::AccountMethods
       include WepayRails::Api::CheckoutMethods
     end
 
