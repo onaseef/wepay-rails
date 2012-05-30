@@ -1,7 +1,12 @@
 class Wepay::IpnController < Wepay::ApplicationController
   def create
+    conds = {
+      :security_token  => params[:security_token],
+      :checkout_id     => params[:checkout_id],
+      :preapproval_id  => params[:preapproval_id],
+    }.delete_if {|k,v| v.nil?}
 
-    record = WepayCheckoutRecord.find_by_checkout_id_and_security_token(params[:checkout_id],params[:security_token])
+    record = WepayCheckoutRecord.where(conds).first
 
     if record.present?
       wepay_gateway = WepayRails::Payments::Gateway.new
