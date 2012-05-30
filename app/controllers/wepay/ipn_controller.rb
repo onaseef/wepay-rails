@@ -6,6 +6,7 @@ class Wepay::IpnController < Wepay::ApplicationController
     if record.present?
       wepay_gateway = WepayRails::Payments::Gateway.new
       checkout = wepay_gateway.lookup_checkout(record.checkout_id)
+      checkout.delete_if {|k,v| !record.attributes.include? k}
       record.update_attributes(checkout)
       render :text => "ok"
     else
