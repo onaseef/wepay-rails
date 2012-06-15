@@ -21,9 +21,11 @@ module WepayRails
     initializer "WepayRails.initialize_wepay_rails" do |app|
       yml = Rails.root.join('config', 'wepay.yml').to_s
       if File.exists?(yml)
-        settings = YAML.load( ERB.new(File.read yml).result )[Rails.env].symbolize_keys
-        Configuration.init_conf(settings)
+        settings = YAML.load_file(yml)[Rails.env].symbolize_keys
+      elsif File.exists?(yml+".erb")
+        settings = YAML::load(ERB.new(IO.read(yml+".erb")).result)[Rails.env].symbolize_keys
       end
+      Configuration.init_conf(settings)
     end
   end
 
@@ -45,13 +47,15 @@ module WepayRails
       attr_accessor :account_id
 
       # Pass in the wepay access token that we got after the oauth handshake
-      # and use it for ongoing comunique with Wepay.
+      # and use it for ongoing communique with Wepay.
       # This also relies heavily on there being a wepay.yml file in your
       # rails config directory - it must look like this:
       def initialize(*args)
-        @wepay_config = WepayRails::Configuration.settings
+        @wepay_config = WepayRails::Configuration.settings || {:scope => []}
         @access_token = args.first || @wepay_config[:access_token]
-        @base_uri     = @wepay_config[:wepay_api_uri] || "https://www.wepay.com/v2"
+        @account_id   = args.first || @wepay_config[:account_id]
+        @ui_endpoint  = @wepay_config[:wepay_ui_endpoint] || "https://www.wepay.com/v2"
+        @api_endpoint = @wepay_config[:wepay_api_endpoint] || "https://wepayapi.com/v2"
       end
 
       # Fetch the access token from wepay for the auth code
@@ -64,7 +68,7 @@ module WepayRails
           :code          => auth_code
         }
 
-        response = self.class.post("#{@base_uri}/oauth2/token", {:body => params})
+        response = self.class.post("#{@api_endpoint}/oauth2/token", {:headers => {'User-Agent' => "WepayRails"}, :body => params})
         json = JSON.parse(response.body)
 
         if json.has_key?("error")
@@ -89,19 +93,16 @@ module WepayRails
         params[:client_id]    ||= @wepay_config[:client_id]
         params[:scope]        ||= @wepay_config[:scope].join(',')
         params[:redirect_uri]   = redirect_uri
+        query = params.map { |k, v| "#{k.to_s}=#{v}" }.join('&')
 
-        query = params.map do |k, v|
-          "#{k.to_s}=#{v}"
-        end.join('&')
-
-        "#{@base_uri}/oauth2/authorize?#{query}"
+        "#{@ui_endpoint}/oauth2/authorize?#{query}"
       end
 
       def wepay_auth_header
         unless @access_token
           raise WepayRails::Exceptions::AccessTokenError.new("No access token available")
         end
-        {'Authorization' => "Bearer: #{@access_token}"}
+        {'Authorization' => "Bearer: #{@access_token}", 'User-Agent' => "WepayRails"}
       end
 
       def configuration
@@ -109,8 +110,14 @@ module WepayRails
       end
 
       def call_api(api_path, params={})
-        response = self.class.post("#{@base_uri}#{api_path}", {:headers => wepay_auth_header}.merge!({:body => params}))
-        JSON.parse(response.body)
+        response = self.class.post("#{@api_endpoint}#{api_path}", {:headers => wepay_auth_header}.merge!({:body => params}))
+        json = JSON.parse(response.body)
+        if json.kind_of? Hash
+          json.symbolize_keys!
+        elsif json.kind_of? Array
+          json.each{|h| h.symbolize_keys!}
+        end
+        return json
       end
 
       include WepayRails::Api::AccountMethods
