@@ -1,5 +1,6 @@
 class Wepay::IpnController < Wepay::ApplicationController
-  def create
+
+  def update
     conds = {
       :security_token  => params[:security_token],
       :checkout_id     => params[:checkout_id],

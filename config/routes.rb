@@ -1,6 +1,6 @@
-Rails.application.routes.draw do 
+Rails.application.routes.draw do
   namespace :wepay do
-    resources :ipn
+    match 'ipn' => 'ipn#update'
     resources :authorize
     resources :checkout
   end
