@@ -46,7 +46,6 @@ module WepayRails
             :fee_payer        => @wepay_config[:fee_payer],
             :charge_tax       => @wepay_config[:charge_tax] ? 1 : 0,
             :app_fee          => @wepay_config[:app_fee],
-            :auto_capture     => @wepay_config[:auto_capture] ? 1 : 0,
             :require_shipping => @wepay_config[:require_shipping] ? 1 : 0,
             :shipping_fee     => @wepay_config[:shipping_fee],
             :account_id       => @wepay_config[:account_id]
